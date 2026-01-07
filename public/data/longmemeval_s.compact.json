@@ -1,0 +1,75 @@
+{
+  "version": "1",
+  "items": [
+    {
+      "id": "sample-s-1",
+      "sessions": [
+        {
+          "id": "s1-session-1",
+          "title": "Travel planning",
+          "turns": [
+            {
+              "role": "user",
+              "content": "I'm planning a trip to Kyoto in October. Can you suggest a two-day itinerary?"
+            },
+            {
+              "role": "assistant",
+              "content": "Day 1: Fushimi Inari, Kiyomizu-dera. Day 2: Arashiyama, Nishiki Market."
+            },
+            {
+              "role": "user",
+              "content": "Great, also remind me the market name again later."
+            }
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "id": "s1-q1",
+          "type": "short_text",
+          "prompt": "What market did the assistant mention?",
+          "answer": "Nishiki Market",
+          "aliases": ["Nishiki"]
+        }
+      ]
+    },
+    {
+      "id": "sample-s-2",
+      "sessions": [
+        {
+          "id": "s2-session-1",
+          "title": "Project status",
+          "turns": [
+            {
+              "role": "user",
+              "content": "We agreed to ship the beta next Friday. Is that still on track?"
+            },
+            {
+              "role": "assistant",
+              "content": "Yes, the beta ships next Friday after QA sign-off."
+            },
+            {
+              "role": "user",
+              "content": "Please confirm the day when we ship."
+            }
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "id": "s2-q1",
+          "type": "boolean",
+          "prompt": "Is the beta shipping after QA sign-off?",
+          "answer": "True"
+        },
+        {
+          "id": "s2-q2",
+          "type": "short_text",
+          "prompt": "When is the beta shipping?",
+          "answer": "next Friday",
+          "aliases": ["Friday"]
+        }
+      ]
+    }
+  ]
+}

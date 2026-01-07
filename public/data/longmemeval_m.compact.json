@@ -1,0 +1,89 @@
+{
+  "version": "1",
+  "items": [
+    {
+      "id": "sample-m-1",
+      "sessions": [
+        {
+          "id": "m1-session-1",
+          "title": "Podcast prep",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Let's prep for the podcast. The guest is Dr. Lin, a marine biologist."
+            },
+            {
+              "role": "assistant",
+              "content": "Noted. We'll focus on coral reefs and climate adaptation."
+            },
+            {
+              "role": "user",
+              "content": "Please remember the guest's name."
+            }
+          ]
+        },
+        {
+          "id": "m1-session-2",
+          "title": "Follow-up",
+          "turns": [
+            {
+              "role": "assistant",
+              "content": "Drafted intro: Today we're joined by Dr. Lin to discuss coral resilience." 
+            }
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "id": "m1-q1",
+          "type": "short_text",
+          "prompt": "What is the guest's name?",
+          "answer": "Dr. Lin",
+          "aliases": ["Lin"]
+        },
+        {
+          "id": "m1-q2",
+          "type": "multiple_choice",
+          "prompt": "What topic will the podcast focus on?",
+          "options": ["Coral reefs", "Deep sea mining", "Space travel"],
+          "answer": "Coral reefs"
+        }
+      ]
+    },
+    {
+      "id": "sample-m-2",
+      "sessions": [
+        {
+          "id": "m2-session-1",
+          "title": "Shopping list",
+          "turns": [
+            {
+              "role": "user",
+              "content": "I need to buy oat milk, apples, and jasmine tea."
+            },
+            {
+              "role": "assistant",
+              "content": "Got it. Oat milk, apples, jasmine tea."
+            }
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "id": "m2-q1",
+          "type": "multiple_choice",
+          "prompt": "Which beverage was on the list?",
+          "options": ["Coffee", "Jasmine tea", "Soda"],
+          "answer": "Jasmine tea"
+        },
+        {
+          "id": "m2-q2",
+          "type": "short_text",
+          "prompt": "Name one fruit from the list.",
+          "answer": "apples",
+          "aliases": ["apple"]
+        }
+      ]
+    }
+  ]
+}
