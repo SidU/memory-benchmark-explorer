@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import HistoryViewer from '../../components/HistoryViewer';
+import Markdown from '../../components/Markdown';
 import QuestionPrompt from '../../components/QuestionPrompt';
 import { fetchDataset, sampleQuestions } from '../../lib/data';
 import type { DatasetVariant, SampledQuestion } from '../../lib/types';
@@ -32,10 +33,12 @@ export default function TestPage() {
   const [questions, setQuestions] = useState<SampledQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [revealedAnswers, setRevealedAnswers] = useState<Record<string, boolean>>({});
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
 
   const currentQuestion = questions[currentIndex];
+  const isAnswerRevealed = currentQuestion ? revealedAnswers[currentQuestion.id] : false;
 
   const progressLabel = useMemo(() => {
     if (questions.length === 0) {
@@ -79,7 +82,7 @@ export default function TestPage() {
     if (!startedAt) {
       return;
     }
-    const confirmSubmit = window.confirm('Submit answers and finish the test?');
+    const confirmSubmit = window.confirm('Finish the test and submit your answers?');
     if (!confirmSubmit) {
       return;
     }
@@ -138,7 +141,14 @@ export default function TestPage() {
                 <span className="tag">Question {progressLabel}</span>
                 <span className="tag">Type: {currentQuestion.type}</span>
               </div>
-              <h3>{currentQuestion.prompt}</h3>
+              {currentQuestion.date && (
+                <div className="notice" style={{ marginBottom: 12 }}>
+                  Asked on {currentQuestion.date}
+                </div>
+              )}
+              <div className="question-prompt">
+                <Markdown content={currentQuestion.prompt} className="markdown" />
+              </div>
               <QuestionPrompt
                 question={currentQuestion}
                 value={answers[currentQuestion.id] ?? ''}
@@ -149,6 +159,12 @@ export default function TestPage() {
                   }))
                 }
               />
+              {isAnswerRevealed && (
+                <div style={{ marginTop: 12 }}>
+                  <div className="label">Correct answer</div>
+                  <Markdown content={currentQuestion.answer} className="markdown" />
+                </div>
+              )}
               <div className="footer-actions">
                 <button
                   type="button"
@@ -168,8 +184,21 @@ export default function TestPage() {
                 >
                   Next
                 </button>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() =>
+                    setRevealedAnswers((prev) => ({
+                      ...prev,
+                      [currentQuestion.id]: true
+                    }))
+                  }
+                  disabled={isAnswerRevealed}
+                >
+                  {isAnswerRevealed ? 'Answer shown' : 'Give Up'}
+                </button>
                 <button type="button" onClick={handleSubmit}>
-                  Submit
+                  Finish Test
                 </button>
               </div>
               <div className="question-nav" style={{ marginTop: 16 }}>

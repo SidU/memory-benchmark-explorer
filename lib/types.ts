@@ -8,6 +8,7 @@ export type Turn = {
 export type Session = {
   id: string;
   title?: string;
+  date?: string;
   turns: Turn[];
 };
 
@@ -17,6 +18,7 @@ export type Question = {
   id: string;
   type: QuestionType;
   prompt: string;
+  date?: string;
   options?: string[];
   answer: string;
   aliases?: string[];

@@ -1,12 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { decodeShareToken } from '../../lib/share';
 import { formatDuration, formatPercent, getScoringConfig } from '../../lib/scoring';
 
 export default function ResultPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const token = searchParams.get('token');
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -29,7 +30,12 @@ export default function ResultPage() {
   const shareText = `LongMemEval score: ${(payload.accuracy * 100).toFixed(0)}% accuracy in ${formatDuration(
     payload.durationMs
   )} → composite ${payload.composite.toFixed(1)} (seed ${payload.seed}, ${payload.count}Q, ${payload.variant.toUpperCase()}).`;
-  const shareUrl = `${window.location.origin}/result?token=${encodeURIComponent(token)}`;
+  const shareUrl = useMemo(() => {
+    if (typeof window === 'undefined' || !token) {
+      return '';
+    }
+    return `${window.location.origin}/result?token=${encodeURIComponent(token)}`;
+  }, [token]);
 
   const handleCopy = async (label: string, value: string) => {
     await navigator.clipboard.writeText(value);
@@ -56,6 +62,11 @@ export default function ResultPage() {
             Time reference uses {T_REF_PER_QUESTION}s per question (minimum time factor{' '}
             {MIN_TIME_FACTOR}).
           </p>
+          <div className="footer-actions">
+            <button type="button" onClick={() => router.push('/')}>
+              Take test again
+            </button>
+          </div>
         </div>
         <div className="card">
           <h3>Share your result</h3>

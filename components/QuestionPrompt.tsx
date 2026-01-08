@@ -1,6 +1,7 @@
 'use client';
 
 import type { Question } from '../lib/types';
+import Markdown from './Markdown';
 
 type Props = {
   question: Question;
@@ -13,15 +14,17 @@ export default function QuestionPrompt({ question, value, onChange }: Props) {
     return (
       <div>
         {question.options.map((option) => (
-          <label key={option} style={{ display: 'block', marginBottom: 8 }}>
+          <label key={option} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
             <input
               type="radio"
               name={question.id}
               value={option}
               checked={value === option}
               onChange={(event) => onChange(event.target.value)}
-            />{' '}
-            {option}
+            />
+            <span className="option-text">
+              <Markdown content={option} inline className="markdown" />
+            </span>
           </label>
         ))}
       </div>
@@ -33,15 +36,15 @@ export default function QuestionPrompt({ question, value, onChange }: Props) {
     return (
       <div>
         {options.map((option) => (
-          <label key={option} style={{ display: 'block', marginBottom: 8 }}>
+          <label key={option} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
             <input
               type="radio"
               name={question.id}
               value={option}
               checked={value === option}
               onChange={(event) => onChange(event.target.value)}
-            />{' '}
-            {option}
+            />
+            <span className="option-text">{option}</span>
           </label>
         ))}
       </div>

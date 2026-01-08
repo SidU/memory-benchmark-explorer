@@ -157,3 +157,34 @@ button:disabled {
   font-size: 13px;
   color: #64748b;
 }
+
+.markdown p {
+  margin: 0 0 12px;
+}
+
+.markdown ul,
+.markdown ol {
+  margin: 0 0 12px 18px;
+  padding: 0;
+}
+
+.markdown code {
+  background: #f1f5f9;
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 0.9em;
+}
+
+.markdown pre code {
+  display: block;
+  padding: 12px;
+  overflow-x: auto;
+}
+
+.question-prompt {
+  font-size: 18px;
+}
+
+.option-text .markdown p {
+  margin: 0;
+}

@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { fetchDataset } from '../lib/data';
 
 const QUESTION_OPTIONS = [5, 10, 20, 50];
 
@@ -12,8 +13,42 @@ export default function HomePage() {
   const [variant, setVariant] = useState<'s' | 'm'>('s');
   const [count, setCount] = useState(10);
   const [seed, setSeed] = useState('');
+  const [availableCount, setAvailableCount] = useState<number | null>(null);
 
   const effectiveSeed = useMemo(() => seed || makeSeed(), [seed]);
+  const countOptions = useMemo(() => {
+    if (!availableCount) {
+      return QUESTION_OPTIONS;
+    }
+    const filtered = QUESTION_OPTIONS.filter((option) => option <= availableCount);
+    if (filtered.length === 0 || filtered[filtered.length - 1] !== availableCount) {
+      filtered.push(availableCount);
+    }
+    return filtered;
+  }, [availableCount]);
+
+  useEffect(() => {
+    let isActive = true;
+    const loadCounts = async () => {
+      try {
+        const dataset = await fetchDataset(variant);
+        const total = dataset.items.reduce((sum, item) => sum + item.questions.length, 0);
+        if (!isActive) {
+          return;
+        }
+        setAvailableCount(total);
+        setCount((prev) => Math.min(prev, total));
+      } catch (err) {
+        if (isActive) {
+          setAvailableCount(null);
+        }
+      }
+    };
+    loadCounts();
+    return () => {
+      isActive = false;
+    };
+  }, [variant]);
 
   const handleStart = () => {
     const params = new URLSearchParams({
@@ -59,13 +94,16 @@ export default function HomePage() {
               value={count}
               onChange={(event) => setCount(Number(event.target.value))}
             >
-              {QUESTION_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option} questions
-                </option>
-              ))}
-            </select>
-          </div>
+            {countOptions.map((option) => (
+              <option key={option} value={option}>
+                {option} questions
+              </option>
+            ))}
+          </select>
+          {availableCount !== null && (
+            <p className="notice">This dataset includes {availableCount} questions.</p>
+          )}
+        </div>
           <div style={{ marginBottom: 16 }}>
             <div className="label">Seed (optional)</div>
             <input

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import type { Session } from '../lib/types';
+import Markdown from './Markdown';
 
 type Props = {
   sessions: Session[];
@@ -51,6 +52,7 @@ export default function HistoryViewer({ sessions }: Props) {
                 <div>
                   Session {index + 1}
                   {session.title ? ` · ${session.title}` : ''}
+                  {session.date ? ` · ${session.date}` : ''}
                 </div>
                 <button
                   type="button"
@@ -72,7 +74,9 @@ export default function HistoryViewer({ sessions }: Props) {
                     className={`turn ${turn.role === 'assistant' ? 'assistant' : ''}`}
                   >
                     <strong>{turn.role.toUpperCase()}</strong>
-                    <p style={{ margin: '8px 0 0' }}>{turn.content}</p>
+                    <div style={{ margin: '8px 0 0' }}>
+                      <Markdown content={turn.content} className="markdown" />
+                    </div>
                   </div>
                 ))}
             </div>

@@ -1,5 +1,7 @@
 const fs = require('fs');
 const path = require('path');
+const { parser } = require('stream-json');
+const { streamArray } = require('stream-json/streamers/StreamArray');
 
 const rawDir = path.join(process.cwd(), 'data', 'raw');
 const publicDir = path.join(process.cwd(), 'public', 'data');
@@ -40,12 +42,37 @@ const normalizeSessions = (item, index) => {
     return item.sessions.map((session, sessionIndex) => ({
       id: session.id || `${index}-session-${sessionIndex}`,
       title: session.title || session.topic,
+      date: session.date || session.timestamp || session.time,
       turns: Array.isArray(session.turns)
         ? session.turns.map(normalizeTurn)
         : Array.isArray(session.messages)
         ? session.messages.map(normalizeTurn)
         : []
     }));
+  }
+  if (Array.isArray(item.haystack_sessions)) {
+    return item.haystack_sessions.map((session, sessionIndex) => {
+      const turns = Array.isArray(session)
+        ? session.map(normalizeTurn)
+        : Array.isArray(session.turns)
+        ? session.turns.map(normalizeTurn)
+        : Array.isArray(session.messages)
+        ? session.messages.map(normalizeTurn)
+        : [];
+      const fallbackId = `${index}-session-${sessionIndex}`;
+      const haystackId = Array.isArray(item.haystack_session_ids)
+        ? item.haystack_session_ids[sessionIndex]
+        : null;
+      const haystackDate = Array.isArray(item.haystack_dates)
+        ? item.haystack_dates[sessionIndex]
+        : null;
+      return {
+        id: haystackId || session.id || fallbackId,
+        title: session.title || session.topic,
+        date: session.date || session.timestamp || session.time || haystackDate,
+        turns
+      };
+    });
   }
   if (Array.isArray(item.history)) {
     const turns = item.history.map(normalizeTurn);
@@ -79,9 +106,10 @@ const normalizeQuestion = (question, index, questionIndex) => {
   }
 
   return {
-    id: question.id || `${index}-q-${questionIndex}`,
+    id: question.id || question.question_id || `${index}-q-${questionIndex}`,
     type,
     prompt: String(prompt),
+    date: question.question_date || question.date || question.timestamp,
     options: Array.isArray(options) ? options.map(String) : undefined,
     answer,
     aliases: Array.isArray(aliases) ? aliases.map(String) : undefined
@@ -105,26 +133,53 @@ const normalizeQuestions = (item, index) => {
   return [];
 };
 
-const buildCompact = (raw) => {
-  const items = raw.map((item, index) => ({
-    id: item.id || item.item_id || `item-${index}`,
-    sessions: normalizeSessions(item, index),
-    questions: normalizeQuestions(item, index)
-  }));
-  return {
-    version: '1',
-    items
-  };
+const buildCompactItem = (item, index) => ({
+  id: item.id || item.item_id || item.question_id || `item-${index}`,
+  sessions: normalizeSessions(item, index),
+  questions: normalizeQuestions(item, index)
+});
+
+const streamJsonArray = (inputPath, onItem) =>
+  new Promise((resolve, reject) => {
+    const input = fs.createReadStream(inputPath);
+    const pipeline = input.pipe(parser()).pipe(streamArray());
+
+    pipeline.on('data', ({ value }) => {
+      onItem(value);
+    });
+    pipeline.on('end', resolve);
+    pipeline.on('error', reject);
+    input.on('error', reject);
+  });
+
+const buildCompactStream = async (input, output) => {
+  const out = fs.createWriteStream(output);
+  out.write('{\n  "version": "1",\n  "items": [\n');
+  let first = true;
+  let index = 0;
+  await streamJsonArray(input, (item) => {
+    const compactItem = buildCompactItem(item, index);
+    const json = JSON.stringify(compactItem);
+    out.write(`${first ? '' : ',\n'}${json}`);
+    first = false;
+    index += 1;
+  });
+  out.write('\n  ]\n}\n');
+  await new Promise((resolve) => out.end(resolve));
 };
 
-inputFiles.forEach(({ input, output }) => {
-  if (!fs.existsSync(input)) {
-    console.log(`Raw file missing: ${input}. Keeping existing compact data.`);
-    return;
+const run = async () => {
+  for (const { input, output } of inputFiles) {
+    if (!fs.existsSync(input)) {
+      console.log(`Raw file missing: ${input}. Keeping existing compact data.`);
+      continue;
+    }
+    await buildCompactStream(input, output);
+    console.log(`Wrote compact dataset to ${output}`);
   }
+};
 
-  const raw = JSON.parse(fs.readFileSync(input, 'utf8'));
-  const compact = buildCompact(Array.isArray(raw) ? raw : raw.items || []);
-  fs.writeFileSync(output, JSON.stringify(compact, null, 2));
-  console.log(`Wrote compact dataset to ${output}`);
+run().catch((err) => {
+  console.error('Dataset build failed:', err.message);
+  process.exit(1);
 });
