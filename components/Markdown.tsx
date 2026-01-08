@@ -2,7 +2,7 @@
 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import type { ReactNode } from 'react';
+import type { Components } from 'react-markdown';
 
 type Props = {
   content: string;
@@ -11,12 +11,16 @@ type Props = {
 };
 
 export default function Markdown({ content, className, inline = false }: Props) {
-  const components = inline
-    ? {
-        p: ({ children }: { children: ReactNode }) => <span>{children}</span>,
-        code: ({ children }: { children: ReactNode }) => <code>{children}</code>
-      }
-    : undefined;
+  const inlineComponents: Components = {
+    p: ({ node: _node, children, ...props }) => <span {...props}>{children}</span>,
+    code: ({ node: _node, className, children, ...props }) => (
+      <code className={className} {...props}>
+        {children}
+      </code>
+    )
+  };
+
+  const components = inline ? inlineComponents : undefined;
 
   if (inline) {
     return (

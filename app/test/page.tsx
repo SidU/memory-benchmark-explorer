@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import HistoryViewer from '../../components/HistoryViewer';
 import Markdown from '../../components/Markdown';
@@ -21,7 +21,7 @@ const parseCount = (value: string | null) => {
   return parsed;
 };
 
-export default function TestPage() {
+function TestPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const variant = parseVariant(searchParams.get('variant'));
@@ -257,5 +257,19 @@ export default function TestPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function TestPage() {
+  return (
+    <Suspense
+      fallback={
+        <main>
+          <p className="notice">Loading test...</p>
+        </main>
+      }
+    >
+      <TestPageContent />
+    </Suspense>
   );
 }

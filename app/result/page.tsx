@@ -1,11 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { decodeShareToken } from '../../lib/share';
 import { formatDuration, formatPercent, getScoringConfig } from '../../lib/scoring';
 
-export default function ResultPage() {
+function ResultPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
@@ -90,5 +90,19 @@ export default function ResultPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function ResultPage() {
+  return (
+    <Suspense
+      fallback={
+        <main>
+          <p className="notice">Loading results...</p>
+        </main>
+      }
+    >
+      <ResultPageContent />
+    </Suspense>
   );
 }

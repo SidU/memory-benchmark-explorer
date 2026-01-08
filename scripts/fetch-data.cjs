@@ -5,6 +5,7 @@ const { URL } = require('url');
 
 const isVercel = process.env.VERCEL === '1';
 const allowFetch = process.env.ALLOW_DATA_FETCH === '1' || process.env.ALLOW_DATA_FETCH === 'true';
+const forceFetch = process.env.FORCE_DATA_FETCH === '1' || process.env.FORCE_DATA_FETCH === 'true';
 
 if (isVercel && !allowFetch) {
   console.log('Skipping dataset fetch on Vercel. Set ALLOW_DATA_FETCH=1 to enable.');
@@ -44,6 +45,20 @@ const targets = targetFiles.map((file) => {
 
 const outputDir = path.join(process.cwd(), 'data', 'raw');
 fs.mkdirSync(outputDir, { recursive: true });
+const targetsToDownload = forceFetch
+  ? targets
+  : targets.filter(({ file }) => {
+      const exists = fs.existsSync(path.join(outputDir, file));
+      if (exists) {
+        console.log(`Found existing dataset file, skipping download: ${file}`);
+      }
+      return !exists;
+    });
+
+if (targetsToDownload.length === 0) {
+  console.log('All dataset files already present. Set FORCE_DATA_FETCH=1 to re-download.');
+  process.exit(0);
+}
 
 let cachedFileList = null;
 let cachedReadmePaths = null;
@@ -254,7 +269,7 @@ const download = (target) =>
     tryNext(0);
   });
 
-Promise.all(targets.map(download))
+Promise.all(targetsToDownload.map(download))
   .then(() => {
     console.log('Download complete.');
   })
