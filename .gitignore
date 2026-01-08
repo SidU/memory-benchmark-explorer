@@ -1,0 +1,8 @@
+node_modules
+.next
+.DS_Store
+.env*
+data/raw/
+public/data/longmemeval_*.compact.json
+data/raw/
+public/data/longmemeval_*.compact.json
