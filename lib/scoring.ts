@@ -37,6 +37,29 @@ export const scoreResponses = (
   };
 };
 
+export const scoreJudgments = (
+  questions: Question[],
+  judgments: Record<string, boolean>,
+  durationMs: number
+): ScoreResult => {
+  const total = questions.length;
+  const correct = questions.filter((question) => judgments[question.id]).length;
+  const accuracy = total === 0 ? 0 : correct / total;
+  const durationSeconds = Math.max(durationMs / 1000, 1);
+  const tRef = T_REF_PER_QUESTION * total;
+  const timeFactor = Math.min(1, Math.max(MIN_TIME_FACTOR, Math.sqrt(tRef / durationSeconds)));
+  const composite = accuracy * timeFactor * 100;
+
+  return {
+    accuracy,
+    total,
+    correct,
+    durationMs,
+    composite,
+    timeFactor
+  };
+};
+
 export const formatDuration = (durationMs: number) => {
   const totalSeconds = Math.floor(durationMs / 1000);
   const minutes = Math.floor(totalSeconds / 60);

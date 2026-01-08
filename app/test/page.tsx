@@ -7,7 +7,7 @@ import Markdown from '../../components/Markdown';
 import QuestionPrompt from '../../components/QuestionPrompt';
 import { fetchDataset, sampleQuestions } from '../../lib/data';
 import type { DatasetVariant, SampledQuestion } from '../../lib/types';
-import { formatDuration, isAnswerCorrect, scoreResponses } from '../../lib/scoring';
+import { formatDuration, scoreJudgments } from '../../lib/scoring';
 import { encodeShareToken, makeSharePayload } from '../../lib/share';
 
 const parseVariant = (value: string | null): DatasetVariant =>
@@ -34,14 +34,17 @@ export default function TestPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submittedAnswers, setSubmittedAnswers] = useState<Record<string, boolean>>({});
+  const [judgments, setJudgments] = useState<Record<string, boolean>>({});
+  const [grading, setGrading] = useState<Record<string, boolean>>({});
+  const [gradingError, setGradingError] = useState<Record<string, string>>({});
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
 
   const currentQuestion = questions[currentIndex];
   const isSubmitted = currentQuestion ? submittedAnswers[currentQuestion.id] : false;
-  const isCorrect = currentQuestion
-    ? isAnswerCorrect(currentQuestion, answers[currentQuestion.id] ?? '')
-    : false;
+  const isCorrect = currentQuestion ? judgments[currentQuestion.id] : false;
+  const isGrading = currentQuestion ? grading[currentQuestion.id] : false;
+  const gradeError = currentQuestion ? gradingError[currentQuestion.id] : '';
 
   const progressLabel = useMemo(() => {
     if (questions.length === 0) {
@@ -90,7 +93,7 @@ export default function TestPage() {
       return;
     }
     const durationMs = Date.now() - startedAt;
-    const score = scoreResponses(questions, answers, durationMs);
+    const score = scoreJudgments(questions, judgments, durationMs);
     const payload = makeSharePayload(
       variant,
       seed,
@@ -172,6 +175,7 @@ export default function TestPage() {
                   <Markdown content={currentQuestion.answer} className="markdown" />
                 </div>
               )}
+              {gradeError && <p style={{ color: '#dc2626' }}>{gradeError}</p>}
               <div className="footer-actions">
                 <button
                   type="button"
@@ -184,15 +188,43 @@ export default function TestPage() {
                 <button
                   type="button"
                   className="secondary"
-                  onClick={() =>
-                    setSubmittedAnswers((prev) => ({
-                      ...prev,
-                      [currentQuestion.id]: true
-                    }))
-                  }
-                  disabled={isSubmitted}
+                  onClick={async () => {
+                    if (!currentQuestion) {
+                      return;
+                    }
+                    setGrading((prev) => ({ ...prev, [currentQuestion.id]: true }));
+                    setGradingError((prev) => ({ ...prev, [currentQuestion.id]: '' }));
+                    try {
+                      const response = await fetch('/api/grade', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          question: currentQuestion.prompt,
+                          answer: currentQuestion.answer,
+                          response: answers[currentQuestion.id] ?? ''
+                        })
+                      });
+                      if (!response.ok) {
+                        throw new Error('Unable to grade answer. Try again.');
+                      }
+                      const data = (await response.json()) as { correct: boolean };
+                      setJudgments((prev) => ({ ...prev, [currentQuestion.id]: data.correct }));
+                      setSubmittedAnswers((prev) => ({
+                        ...prev,
+                        [currentQuestion.id]: true
+                      }));
+                    } catch (err) {
+                      setGradingError((prev) => ({
+                        ...prev,
+                        [currentQuestion.id]: 'Unable to grade answer. Try again.'
+                      }));
+                    } finally {
+                      setGrading((prev) => ({ ...prev, [currentQuestion.id]: false }));
+                    }
+                  }}
+                  disabled={isSubmitted || isGrading}
                 >
-                  Submit Answer
+                  {isGrading ? 'Checking...' : 'Submit Answer'}
                 </button>
                 <button
                   type="button"
@@ -202,7 +234,7 @@ export default function TestPage() {
                     setCurrentIndex((prev) => Math.min(prev + 1, questions.length - 1))
                   }
                 >
-                  Skip
+                  {isSubmitted && isCorrect ? 'Next' : 'Skip'}
                 </button>
                 <button type="button" onClick={handleSubmit}>
                   End Test

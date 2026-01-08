@@ -29,6 +29,10 @@ long-context memory prompts, answer them yourself, and see how the tasks are str
 
 Open `http://localhost:3000`.
 
+## LLM grading
+Answer grading is performed on the server with OpenAI. Set `OPENAI_API_KEY`
+in your environment before running the app.
+
 ## Dataset notes
 - Raw files are downloaded from Hugging Face.
 - The app reads from `public/data/longmemeval_s.compact.json` and
