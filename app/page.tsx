@@ -3,14 +3,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchDataset } from '../lib/data';
+import type { DatasetVariant } from '../lib/types';
 
 const QUESTION_OPTIONS = [5, 10, 20, 50];
 
 const makeSeed = () => Math.random().toString(36).slice(2, 10);
 
+const VARIANT_LABELS: Record<DatasetVariant, string> = {
+  s: 'S (short)',
+  m: 'M (medium)',
+  l: 'LoCoMo'
+};
+
 export default function HomePage() {
   const router = useRouter();
-  const [variant, setVariant] = useState<'s' | 'm'>('s');
+  const [variant, setVariant] = useState<DatasetVariant>('s');
   const [count, setCount] = useState(10);
   const [seed, setSeed] = useState('');
   const [availableCount, setAvailableCount] = useState<number | null>(null);
@@ -61,7 +68,7 @@ export default function HomePage() {
 
   return (
     <main>
-      <h1>LongMemEval Human Scoring</h1>
+      <h1>Memory Benchmark Explorer</h1>
       <p>
         Experience long-context memory tasks with a shareable score. Choose a dataset split and
         question count to begin.
@@ -71,20 +78,16 @@ export default function HomePage() {
           <div style={{ marginBottom: 16 }}>
             <div className="label">Dataset variant</div>
             <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
-              <button
-                type="button"
-                className={variant === 's' ? '' : 'secondary'}
-                onClick={() => setVariant('s')}
-              >
-                S (short)
-              </button>
-              <button
-                type="button"
-                className={variant === 'm' ? '' : 'secondary'}
-                onClick={() => setVariant('m')}
-              >
-                M (medium)
-              </button>
+              {(Object.keys(VARIANT_LABELS) as DatasetVariant[]).map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={variant === key ? '' : 'secondary'}
+                  onClick={() => setVariant(key)}
+                >
+                  {VARIANT_LABELS[key]}
+                </button>
+              ))}
             </div>
           </div>
           <div style={{ marginBottom: 16 }}>

@@ -4,6 +4,16 @@ import { Suspense, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { decodeShareToken } from '../../lib/share';
 import { formatDuration, formatPercent, getScoringConfig } from '../../lib/scoring';
+import type { DatasetVariant } from '../../lib/types';
+
+const VARIANT_LABELS: Record<DatasetVariant, string> = {
+  s: 'S (short)',
+  m: 'M (medium)',
+  l: 'LoCoMo'
+};
+
+const getVariantLabel = (variant: DatasetVariant | string) =>
+  VARIANT_LABELS[variant as DatasetVariant] ?? variant.toString().toUpperCase();
 
 function ResultPageContent() {
   const searchParams = useSearchParams();
@@ -27,9 +37,11 @@ function ResultPageContent() {
     );
   }
 
-  const shareText = `LongMemEval score: ${(payload.accuracy * 100).toFixed(0)}% accuracy in ${formatDuration(
+  const shareText = `Memory Benchmark score: ${(payload.accuracy * 100).toFixed(0)}% accuracy in ${formatDuration(
     payload.durationMs
-  )} → composite ${payload.composite.toFixed(1)} (seed ${payload.seed}, ${payload.count}Q, ${payload.variant.toUpperCase()}).`;
+  )} → composite ${payload.composite.toFixed(1)} (seed ${payload.seed}, ${payload.count}Q, ${getVariantLabel(
+    payload.variant
+  )}).`;
   const shareUrl = useMemo(() => {
     if (typeof window === 'undefined' || !token) {
       return '';

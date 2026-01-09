@@ -1,4 +1,4 @@
-export type DatasetVariant = 's' | 'm';
+export type DatasetVariant = 's' | 'm' | 'l';
 
 export type Turn = {
   role: 'user' | 'assistant' | 'system';

@@ -8,6 +8,17 @@ type Props = {
   sessions: Session[];
 };
 
+const parseSpeaker = (content: string) => {
+  const match = content.match(/^\s*\[([^\]]+)\]:\s*/);
+  if (match) {
+    return {
+      speaker: match[1].trim(),
+      text: content.slice(match[0].length).trimStart()
+    };
+  }
+  return { speaker: null, text: content };
+};
+
 export default function HistoryViewer({ sessions }: Props) {
   const [search, setSearch] = useState('');
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -73,10 +84,18 @@ export default function HistoryViewer({ sessions }: Props) {
                     key={`${session.id}-${turnIndex}`}
                     className={`turn ${turn.role === 'assistant' ? 'assistant' : ''}`}
                   >
-                    <strong>{turn.role.toUpperCase()}</strong>
-                    <div style={{ margin: '8px 0 0' }}>
-                      <Markdown content={turn.content} className="markdown" />
-                    </div>
+                    {(() => {
+                      const { speaker, text } = parseSpeaker(turn.content);
+                      const label = speaker || turn.role.toUpperCase();
+                      return (
+                        <>
+                          <strong>{label}</strong>
+                          <div style={{ margin: '8px 0 0' }}>
+                            <Markdown content={text} className="markdown" />
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 ))}
             </div>

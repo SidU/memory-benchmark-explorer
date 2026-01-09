@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const readline = require('readline');
 const { parser } = require('stream-json');
 const { streamArray } = require('stream-json/streamers/StreamArray');
 
@@ -10,11 +11,18 @@ fs.mkdirSync(publicDir, { recursive: true });
 const inputFiles = [
   {
     input: path.join(rawDir, 'longmemeval_s_cleaned.json'),
-    output: path.join(publicDir, 'longmemeval_s.compact.json')
+    output: path.join(publicDir, 'longmemeval_s.compact.json'),
+    format: 'json_array'
   },
   {
     input: path.join(rawDir, 'longmemeval_m_cleaned.json'),
-    output: path.join(publicDir, 'longmemeval_m.compact.json')
+    output: path.join(publicDir, 'longmemeval_m.compact.json'),
+    format: 'json_array'
+  },
+  {
+    input: path.join(rawDir, 'locomo_mc10.json'),
+    output: path.join(publicDir, 'locomo.compact.json'),
+    format: 'jsonl'
   }
 ];
 
@@ -168,13 +176,47 @@ const buildCompactStream = async (input, output) => {
   await new Promise((resolve) => out.end(resolve));
 };
 
+const buildCompactJsonLines = async (input, output) => {
+  const out = fs.createWriteStream(output);
+  const reader = readline.createInterface({
+    input: fs.createReadStream(input),
+    crlfDelay: Infinity
+  });
+  out.write('{\n  "version": "1",\n  "items": [\n');
+  let first = true;
+  let index = 0;
+  for await (const line of reader) {
+    if (!line.trim()) {
+      continue;
+    }
+    let item;
+    try {
+      item = JSON.parse(line);
+    } catch (err) {
+      console.warn(`Skipping invalid JSON line ${index + 1}: ${err.message}`);
+      continue;
+    }
+    const compactItem = buildCompactItem(item, index);
+    const json = JSON.stringify(compactItem);
+    out.write(`${first ? '' : ',\n'}${json}`);
+    first = false;
+    index += 1;
+  }
+  out.write('\n  ]\n}\n');
+  await new Promise((resolve) => out.end(resolve));
+};
+
 const run = async () => {
-  for (const { input, output } of inputFiles) {
+  for (const { input, output, format } of inputFiles) {
     if (!fs.existsSync(input)) {
       console.log(`Raw file missing: ${input}. Keeping existing compact data.`);
       continue;
     }
-    await buildCompactStream(input, output);
+    if (format === 'jsonl') {
+      await buildCompactJsonLines(input, output);
+    } else {
+      await buildCompactStream(input, output);
+    }
     console.log(`Wrote compact dataset to ${output}`);
   }
 };

@@ -2,8 +2,8 @@ import './globals.css';
 import type { ReactNode } from 'react';
 
 export const metadata = {
-  title: 'LongMemEval Human Scoring',
-  description: 'Run a LongMemEval human test and share your score.'
+  title: 'Memory Benchmark Explorer',
+  description: 'Explore long-context benchmarks, take tests, and share your score.'
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

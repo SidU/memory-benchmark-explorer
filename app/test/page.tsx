@@ -10,8 +10,21 @@ import type { DatasetVariant, SampledQuestion } from '../../lib/types';
 import { formatDuration, scoreJudgments } from '../../lib/scoring';
 import { encodeShareToken, makeSharePayload } from '../../lib/share';
 
-const parseVariant = (value: string | null): DatasetVariant =>
-  value === 'm' ? 'm' : 's';
+const parseVariant = (value: string | null): DatasetVariant => {
+  if (value === 'm') {
+    return 'm';
+  }
+  if (value === 'l' || value === 'locomo') {
+    return 'l';
+  }
+  return 's';
+};
+
+const VARIANT_LABELS: Record<DatasetVariant, string> = {
+  s: 'S (short)',
+  m: 'M (medium)',
+  l: 'LoCoMo'
+};
 
 const parseCount = (value: string | null) => {
   const parsed = Number(value);
@@ -71,7 +84,7 @@ function TestPageContent() {
       const sampled = sampleQuestions(dataset, count, seed);
       setQuestions(sampled);
     } catch (err) {
-      setError('Unable to load dataset. Ensure the data files are available.');
+      setError('Unable to load dataset. Ensure the data files are available and built (npm run fetch:data && npm run build:data).');
     } finally {
       setIsLoading(false);
     }
@@ -112,7 +125,7 @@ function TestPageContent() {
         <div>
           <h1>Test Runner</h1>
           <p className="notice">
-            Variant {variant.toUpperCase()} · {count} questions · Seed {seed}
+            Variant {VARIANT_LABELS[variant]} · {count} questions · Seed {seed}
           </p>
         </div>
         <div className="timer">{formatDuration(elapsed)}</div>

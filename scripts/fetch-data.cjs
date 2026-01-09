@@ -18,6 +18,9 @@ const baseUrl =
 const apiUrl =
   process.env.LONGMEMEVAL_DATA_API ||
   'https://huggingface.co/api/datasets/xiaowu0162/LongMemEval';
+const locomoBaseUrl =
+  process.env.LOCOMO_DATA_BASE ||
+  'https://huggingface.co/datasets/Percena/locomo-mc10/resolve/main';
 
 const targetFiles = ['longmemeval_s_cleaned.json', 'longmemeval_m_cleaned.json'];
 const candidateSubdirs = ['', 'data', 'raw', 'cleaned'];
@@ -41,6 +44,11 @@ const targets = targetFiles.map((file) => {
     });
   });
   return { file, urls };
+});
+
+targets.push({
+  file: 'locomo_mc10.json',
+  urls: [`${locomoBaseUrl}/data/locomo_mc10.json`]
 });
 
 const outputDir = path.join(process.cwd(), 'data', 'raw');
